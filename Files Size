@@ -1,0 +1,15 @@
+DECLARE @db sysname = N'DatabaseName';  -- غيّر اسم القاعدة هنا
+DECLARE @sql nvarchar(max) = N'
+USE ' + QUOTENAME(@db) + N';
+SELECT
+    DB_NAME()                                        AS DatabaseName,
+    mf.name                                          AS LogicalName,
+    CASE mf.type WHEN 0 THEN N''DATA'' WHEN 1 THEN N''LOG'' ELSE N''OTHER'' END AS FileType,
+    CAST(mf.size * 8.0 / 1024 AS decimal(18,2))      AS SizeMB,
+    CAST(FILEPROPERTY(mf.name, ''SpaceUsed'') * 8.0 / 1024 AS decimal(18,2)) AS UsedMB,
+    CAST((mf.size - FILEPROPERTY(mf.name, ''SpaceUsed'')) * 8.0 / 1024 AS decimal(18,2)) AS FreeMB,
+    CAST(((mf.size - FILEPROPERTY(mf.name, ''SpaceUsed'')) * 100.0) / mf.size AS decimal(5,2)) AS FreePercent
+FROM sys.database_files AS mf
+ORDER BY mf.type, mf.name;
+';
+EXEC sp_executesql @sql;
